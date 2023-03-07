@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+
 import 'package:get/get.dart';
 import 'package:i_chat/custom_textformfield.dart';
 
@@ -70,15 +71,15 @@ class _ChatScreenState extends State<ChatScreen> {
                     final List<QueryDocumentSnapshot> docs =
                         snapshot.data!.docs;
                     return ListView.builder(
-                      reverse: false,
+                      reverse: true,
                       controller: scrollController,
                       itemCount: docs.length,
                       itemBuilder: (context, index) {
                         final bool isMe =
                             docs[index]['from'] == user.currentUser?.email;
                         return Message(
-                          me: isMe,
-                          from: docs[index]['from'],
+                          isMe: isMe,
+                          sender: docs[index]['from'],
                           text: docs[index]['text'],
                         );
                       },
@@ -111,36 +112,63 @@ class _ChatScreenState extends State<ChatScreen> {
 }
 
 class Message extends StatelessWidget {
-  final bool me;
-  final String from;
+  final bool isMe;
+  final String sender;
   final String text;
+
   const Message({
-    super.key,
-    required this.me,
-    required this.from,
+    Key? key,
+    required this.isMe,
+    required this.sender,
     required this.text,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      child: Column(
-        crossAxisAlignment:
-            me ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      padding: EdgeInsets.only(
+        top: 8,
+        bottom: 8,
+        left: isMe ? 48 : 0,
+        right: isMe ? 0 : 48,
+      ),
+      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(from).marginAll(5),
-          Material(
-            color: me ? Colors.teal : Colors.blue,
-            borderRadius: BorderRadius.circular(8.0),
-            elevation: 2,
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
-              child: Padding(
-                padding: const EdgeInsets.all(5.0),
-                child: Text(text),
+          if (!isMe)
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: Text(
+                sender,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
-          ).marginAll(5),
+          Container(
+            decoration: BoxDecoration(
+              color: isMe ? Colors.blue : Colors.grey[200],
+              borderRadius: BorderRadius.circular(8),
+            ),
+            padding: const EdgeInsets.symmetric(
+              vertical: 8,
+              horizontal: 16,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  text,
+                  style: TextStyle(
+                    color: isMe ? Colors.white : Colors.black,
+                  ),
+                ),
+                const SizedBox(height: 5),
+              ],
+            ),
+          ),
         ],
       ),
     );
